@@ -9,6 +9,7 @@
 # deque-strata.py
 #
 
+import numpy as np
 import sys
 import boto3
 from pathlib import Path
@@ -16,6 +17,10 @@ import json
 import time
 import yaml
 from datetime import datetime
+from collections import deque
+
+
+elapsed_times = deque()
 
 
 def mtime():
@@ -78,6 +83,12 @@ def get_5msgs(estimatesq, strataq):
         sha = body['sha']
         data = body['data']
 
+        elapsed = body.get('elapsed', -1)
+        if elapsed not in [-1, 'NA']:
+            elapsed_times.appendleft(elapsed)
+        if len(elapsed_times) > 100:
+            elapsed_times.pop()
+
         receipt = message.receipt_handle
         msgid = message.message_id
 
@@ -95,9 +106,14 @@ def get_5msgs(estimatesq, strataq):
         print(response)
         sys.exit(1)
 
+    if len(elapsed_times) > 5:
+        mn_elapsed = int(np.mean(elapsed_times))
+    else:
+        mn_elapsed = "NA"
     num_estimates = estimatesq.attributes['ApproximateNumberOfMessages']
     num_strata = strataq.attributes['ApproximateNumberOfMessages']
-    print(f"{mtime()} ; in estimates={num_estimates}; in strata={num_strata}")
+    print(f"{mtime()} ; in estimatesQ={num_estimates}; in strataQ={num_strata}; "
+          f"mean time per estimate: {mn_elapsed}")
     return True
 
 
