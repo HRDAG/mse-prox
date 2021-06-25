@@ -13,10 +13,25 @@ import sys
 import boto3
 from pathlib import Path
 import json
+import time
 import yaml
+from datetime import datetime
 
 
-def get_estimateq():
+def mtime():
+    nows = datetime.now()
+    return nows.strftime('%Y-%m-%dT%H:%M:%S%z')
+
+def get_strataq():
+    sqs = boto3.client('sqs', region_name="us-east-2")
+    squrl = [q for q in sqs.list_queues()['QueueUrls'] if 'strata' in q]
+    assert len(squrl) == 1
+    squrl = squrl[0]
+    sqs = boto3.resource('sqs', region_name="us-east-2")
+    return sqs.Queue(squrl)
+
+
+def get_estimatesq():
     sqs = boto3.client('sqs', region_name="us-east-2")
     qurl = [q for q in sqs.list_queues()['QueueUrls'] if 'estimates' in q]
     assert len(qurl) == 1
@@ -46,22 +61,55 @@ def get_1msg(q):
     return msgid, receipt, sha, data
 
 
-if __name__ == '__main__':
-    estimateq = get_estimateq()
+def get_5msgs(estimatesq, strataq):
+    response = estimatesq.receive_messages(
+        MaxNumberOfMessages=5,
+        WaitTimeSeconds=20,
+        AttributeNames=['All'],
+    )
+    num_messages = len(response)
+    if num_messages == 0:
+        return False
 
-    msgid, receipt, sha, data = get_1msg(estimateq)
-    if msgid is None:
+    entries = list()
+    for message in response:
+
+        body = json.loads(message.body)
+        sha = body['sha']
+        data = body['data']
+
+        receipt = message.receipt_handle
+        msgid = message.message_id
+
+        prefix = sha[0:2]
+        outputdir = Path("/datos/estimates/fase3/") / f"{prefix}"
+        outputdir.mkdir(exist_ok=True)
+        outputpath = outputdir / f"{sha}.json"
+        if not outputpath.exists():
+            outputpath.write_text(data)
+
+        entries.append({'Id': msgid, 'ReceiptHandle': receipt})
+
+    response = estimatesq.delete_messages(Entries=entries)
+    if not 'Successful' in response:
+        print(response)
         sys.exit(1)
 
-    prefix = sha[0:2]
-    # write to /datos/estimates/fase3/prefix/
-    outputfile = Path("/datos/estimates/fase3/") / f"{prefix}/{sha}.json"
-    with open(outputfile, 'wt') as f:
-        f.write(data)
+    num_estimates = estimatesq.attributes['ApproximateNumberOfMessages']
+    num_strata = strataq.attributes['ApproximateNumberOfMessages']
+    print(f"{mtime()} ; in estimates={num_estimates}; in strata={num_strata}")
+    return True
 
-    yaml_sha = f"output/{sha}.yaml"
-    with open(yaml_sha, 'wt') as f:
-        yaml.dump({'msgid': msgid, 'receipt': receipt}, f)
 
-    sys.stdout.write(f"{sha}\n")
+if __name__ == '__main__':
+    estimatesq = get_estimatesq()
+    strataq = get_strataq()
+
+    while True:
+        status = get_5msgs(estimatesq, strataq)
+        if not status:
+            print(f"{mtime()} no estimates found, sleeping 1m")
+            time.sleep(60)
+
+
 # done.
