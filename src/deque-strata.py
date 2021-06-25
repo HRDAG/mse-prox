@@ -14,6 +14,7 @@ import boto3
 from pathlib import Path
 import json
 import yaml
+import time
 
 
 def get_strataq():
@@ -59,7 +60,8 @@ if __name__ == '__main__':
 
     yaml_sha = f"output/{sha}.yaml"
     with open(yaml_sha, 'wt') as f:
-        yaml.dump({'msgid': msgid, 'receipt': receipt}, f)
+        yaml.dump({'msgid': msgid, 'receipt': receipt,
+                   'start_time': time.time()}, f)
 
     sys.stdout.write(f"{sha}\n")
 # done.

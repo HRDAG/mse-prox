@@ -16,6 +16,7 @@ from pathlib import Path
 from glob import glob
 import json
 import yaml
+import time
 
 import argparse
 
@@ -44,10 +45,10 @@ def get_strataq():
     return sqs.Queue(squrl)
 
 
-def send_one_message(q, sha, spath):
+def send_one_message(q, sha, elapsed, spath):
     with open(spath, 'rt') as f:
         js = f.read()
-    msg = {'sha': sha, 'data': js}
+    msg = {'sha': sha, 'data': js, 'elapsed': elapsed}
     response = q.send_message(MessageBody = json.dumps(msg))
     assert int(response['ResponseMetadata']['HTTPStatusCode']) == 200
     return response
@@ -59,13 +60,16 @@ if __name__ == '__main__':
     args = getargs()
 
     inputfile = Path("input") / f"{args.sha}.json"
+    yfile = Path("output") / f"{args.sha}.yaml"
+    msginfo = yaml.safe_load(open(yfile, 'rt'))
+    if 'start_time' in msginfo:
+        elapsed_time = int(time.time() - float(msginfo['start_time']))
+    else:
+        elapsed_time = 'NA'
 
     # send output to estimates queue
     outputfile = Path("output") / f"{args.sha}.json"
-    send_one_message(estimatesq, args.sha, outputfile)
-
-    yfile = Path("output") / f"{args.sha}.yaml"
-    msginfo = yaml.safe_load(open(yfile, 'rt'))
+    send_one_message(estimatesq, args.sha, elapsed_time, outputfile)
 
     response = strataq.delete_messages(Entries=[{
         'Id': msginfo['msgid'],
