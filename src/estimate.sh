@@ -12,9 +12,6 @@
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 cd "$(dirname $SCRIPT_DIR)"
 
-mkdir input || true
-mkdir output || true
-
 while true;
 do
 
