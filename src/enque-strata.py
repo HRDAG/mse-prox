@@ -44,10 +44,23 @@ def get_strataq():
 
 
 def get_strata_paths(args):
-    # TODO: someday this could filter for existing estimates
-    # TODO: sort largest files first
     spaths = glob(str(args.strata / '*.json'))
     logging.info(f"found {len(spaths)} json files to enqueue")
+    return spaths
+
+
+def filter_spaths(spaths, args, verbose=False):
+    strata_sha1s = set([str(f)[-45:-5] for f in spaths])
+    assert all(len(s) == 40 for s in strata_sha1s)
+    est_sha1s = set([str(f)[-45:-5] for f in
+                 glob("/datos/estimates/fase3/**/*.json", recursive=True)])
+
+    sha1s_to_estimate = strata_sha1s - est_sha1s
+
+    if verbose:
+        print(f"{len(spaths)} | {len(est_sha1s)} | {len(sha1s_to_estimate)}")
+    spaths = [f"{args.strata}/{s}.json" for s in sha1s_to_estimate]
+    assert all([Path(p).exists() for p in spaths])
     return spaths
 
 
@@ -80,7 +93,8 @@ if __name__ == '__main__':
     strataq = get_strataq()
     args = getargs()
     spaths = get_strata_paths(args)
-    logging.info(f"found {len(spaths)} spaths to enqueue")
+    spaths = filter_spaths(spaths, args)
+    logging.info(f"after filter, found {len(spaths)} spaths to enqueue")
 
     maxitems = 5
     chunks = [spaths[x:x+maxitems] for x in range(0, len(spaths), maxitems)]

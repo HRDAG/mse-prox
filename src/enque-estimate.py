@@ -75,7 +75,8 @@ if __name__ == '__main__':
         'Id': msginfo['msgid'],
         'ReceiptHandle': msginfo['receipt']}])
 
-    assert 'Successful' in response
+    if not 'Successful' in response:
+        print(f"warning: failed to delete message from strata queue")
 
     inputfile.unlink()
     yfile.unlink()

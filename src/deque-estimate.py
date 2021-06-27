@@ -73,6 +73,7 @@ def get_5msgs(estimatesq, strataq):
         AttributeNames=['All'],
     )
     num_messages = len(response)
+    print(f"found {num_messages}, processing")
     if num_messages == 0:
         return False
 
