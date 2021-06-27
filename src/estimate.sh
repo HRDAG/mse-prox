@@ -15,7 +15,7 @@ cd "$(dirname $SCRIPT_DIR)"
 while true;
 do
 
-	sha=$(python3 src/deque-strata.py)
+	sha=$(python3 src/deque-strata.py) || exit 1 
 
 	if [[ -n $sha ]];
 	then

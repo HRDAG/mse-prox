@@ -1,5 +1,6 @@
 input/
 output/
+tmp/
 
 
 # --- the below are R and python gitignores from GitHub -----

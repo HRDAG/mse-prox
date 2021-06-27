@@ -52,7 +52,7 @@ if __name__ == '__main__':
 
     msgid, receipt, sha, data = get_1msg(strataq)
     if msgid is None:
-        sys.exit(1)
+        sys.exit(0)
 
     input_sha = f"input/{sha}.json"
     with open(input_sha, 'wt') as f:
