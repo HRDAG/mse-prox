@@ -25,7 +25,7 @@ logging.basicConfig(level=logging.INFO,
                     handlers=[logging.StreamHandler()])
 
 def getargs():
-    ipath = Path("/datos/compute/fase3/")
+    ipath = Path("/datos/compute/")
     parser = argparse.ArgumentParser()
     parser.add_argument("--strata", default=ipath / "strata")
     parser.add_argument("--estimates", default=ipath / "estimates")
@@ -96,11 +96,11 @@ if __name__ == '__main__':
     spaths = filter_spaths(spaths, args)
     logging.info(f"after filter, found {len(spaths)} spaths to enqueue")
 
-    maxitems = 5
+    maxitems = 4
     chunks = [spaths[x:x+maxitems] for x in range(0, len(spaths), maxitems)]
     if args.max_chunks != 0:
         chunks = chunks[0:args.max_chunks]
-    logging.info(f"will add {len(chunks)} chunks of 10 msgs")
+    logging.info(f"will add {len(chunks)} chunks of {maxitems} msgs")
 
     total_queued = 0
     for i, chunk in enumerate(chunks):
