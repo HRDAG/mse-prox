@@ -97,7 +97,9 @@ def get_5msgs(estimatesq, strataq):
         outputdir = Path("/datos/estimates/fase3/") / f"{prefix}"
         outputdir.mkdir(exist_ok=True)
         outputpath = outputdir / f"{sha}.json"
-        if not outputpath.exists():
+        if outputpath.exists():
+            print(f"hit existing sha1 {sha}, skipping")
+        else:
             outputpath.write_text(data)
 
         entries.append({'Id': msgid, 'ReceiptHandle': receipt})
