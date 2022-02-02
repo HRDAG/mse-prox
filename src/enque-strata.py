@@ -96,7 +96,7 @@ if __name__ == '__main__':
     spaths = filter_spaths(spaths, args)
     logging.info(f"after filter, found {len(spaths)} spaths to enqueue")
 
-    maxitems = 2
+    maxitems = 1
     chunks = [spaths[x:x+maxitems] for x in range(0, len(spaths), maxitems)]
     if args.max_chunks != 0:
         chunks = chunks[0:args.max_chunks]
