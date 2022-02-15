@@ -52,6 +52,7 @@ def get_strata_paths(args):
 def filter_spaths(spaths, args, verbose=False):
     strata_sha1s = set([str(f)[-45:-5] for f in spaths])
     assert all(len(s) == 40 for s in strata_sha1s)
+
     est_sha1s = set([str(f)[-45:-5] for f in
                  glob("/datos/estimates/fase3/**/*.json", recursive=True)])
 
