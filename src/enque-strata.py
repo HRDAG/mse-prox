@@ -86,7 +86,11 @@ def send_n_messages(q, spaths):
         entry = {'Id': str(sha),
                  'MessageBody': msg}
         entries.append(entry)
-    response = q.send_messages(Entries=entries)
+    try:
+        response = q.send_messages(Entries=entries)
+    except:
+        print(f"sha={sha} failed to enque")
+        response = None
     return response
 
 
@@ -106,6 +110,8 @@ if __name__ == '__main__':
     total_queued = 0
     for i, chunk in enumerate(chunks):
         response = send_n_messages(strataq, chunk)
+        if not response:
+            continue
         total_queued += len(chunk)
         if i % 100 == 0:
             logging.info(f"enqueued {total_queued} strata")
